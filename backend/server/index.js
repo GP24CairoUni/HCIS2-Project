@@ -1,17 +1,38 @@
-const express = require("express");
+const express = require('express');
+const dotenv = require('dotenv');
+const cors = require('cors');
 
-const PORT = process.env.PORT || 3001;
+dotenv.config(); // Load environment variables from .env file
 
-const app = express();
+const connectionModule = require('./DataBase/connection');
 
-app.listen(PORT, () => {
-    console.log(`Server listening on ${PORT}`);
+const RecordRoute = require('./routes/recordRouter');
+const PrescriptionRoute = require('./routes/prescriptionRouter');
+const medicalHistoryRoute = require('./routes/historyRouter');
+
+const EMR_app = express();
+EMR_app.use(cors());
+const PORT =  process.env.PORT || 3000;
+
+//====================================================================
+EMR_app.use(cors({                     
+  origin: 'http://localhost:3000',
+}));
+
+connectionModule.connect((err) => {
+  if (err){
+    console.error('Error connecting to database:', err);
+    return;
+  }
+
+  console.log('DATABASE CONNECTED');
+  
+  EMR_app.listen(PORT, () => {
+    console.log(`SERVER: http://localhost:${PORT}`);
+  });
 });
-
-app.get("/api", (req, res) => {
-    res.json({ message: "Hello from server!" });
-});
-
-app.listen(PORT, () => {
-    console.log(`Server listening on ${PORT}`);
-});
+//====================================================================
+EMR_app.use(express.json());
+EMR_app.use('/', RecordRoute);
+EMR_app.use('/', PrescriptionRoute);
+EMR_app.use('/', medicalHistoryRoute);
